@@ -5,11 +5,14 @@ from twitchAPI.chat import Chat, ChatEvent, ChatCommand, ChatMessage
 from twitchAPI.oauth import UserAuthenticator
 from twitchAPI.type import AuthScope
 from .config import Config
+from random import randint
 import asyncio
 # Define your Client ID, Client Secret, bot username, and channel name
 
 # Define the required scopes
 USER_SCOPE = [AuthScope.CHAT_READ, AuthScope.CHAT_EDIT]
+randhex = lambda d: hex(randint(0,16**d - 1)).split("x")[1].rjust(d,"0")
+unique = lambda s: f"{s} {randhex(4)}"
 
 async def get_chat(conf: Config = Config.get(), scopes: list[AuthScope] = USER_SCOPE) -> Chat:
     # Set up twitch API instance and add user authentication
@@ -22,7 +25,6 @@ async def get_chat(conf: Config = Config.get(), scopes: list[AuthScope] = USER_S
     chat = await Chat(twitch)
     return twitch, chat
 
-# Command handler for "!reply"
 class ChatResponder:
     def __init__(self, channel: str, trigger_text: str, response: str, trigger_username: Optional[str] = None):
         self.channel = channel
@@ -36,6 +38,9 @@ class ChatResponder:
         if self.chat is not None:
             await self.chat.send_message(channel, text)
 
+    async def send_message(self, text: str, delay: float = 1.0):
+        await asyncio.create_task(self._delayed_send(self.channel, unique(text), delay))
+
     async def on_message(self, msg: ChatMessage):
         print(msg.user.name)
         print(msg.text)
@@ -45,7 +50,7 @@ class ChatResponder:
         if self.trigger_username is not None:
             predicate = lambda m: text_pred(m) and self.trigger_username.lower() == m.user.name.lower()
         if predicate(msg):
-            asyncio.create_task(self._delayed_send(self.channel, self.response, 1.0))
+            await self.send_message(self.response)
         print()
 
     # Main function to run the bot
