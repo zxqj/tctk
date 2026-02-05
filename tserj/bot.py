@@ -1,18 +1,17 @@
-from typing import Optional
+from typing import Optional, Callable, Awaitable, Any
 
 from twitchAPI.twitch import Twitch
 from twitchAPI.chat import Chat, ChatEvent, ChatCommand, ChatMessage
 from twitchAPI.oauth import UserAuthenticator
 from twitchAPI.type import AuthScope
 from .config import Config
+from dataclasses import dataclass
 from random import randint
 import asyncio
 # Define your Client ID, Client Secret, bot username, and channel name
 
 # Define the required scopes
 USER_SCOPE = [AuthScope.CHAT_READ, AuthScope.CHAT_EDIT]
-randhex = lambda d: hex(randint(0,16**d - 1)).split("x")[1].rjust(d,"0")
-unique = lambda s: f"{s} {randhex(4)}"
 
 async def get_chat(conf: Config = Config.get(), scopes: list[AuthScope] = USER_SCOPE) -> Chat:
     # Set up twitch API instance and add user authentication
@@ -25,13 +24,14 @@ async def get_chat(conf: Config = Config.get(), scopes: list[AuthScope] = USER_S
     chat = await Chat(twitch)
     return twitch, chat
 
-class ChatResponder:
-    def __init__(self, channel: str, trigger_text: str, response: str, trigger_username: Optional[str] = None):
+class ChatBot:
+    def __init__(self, channel: str):
         self.channel = channel
-        self.trigger_text = trigger_text
-        self.response = response
-        self.trigger_username = trigger_username
+        self.behaviors: list[Callable[[ChatBot, ChatMessage], Awaitable[Any]]] = []
         self.chat = None
+
+    def add_behavior(self, behavior: Callable[[ChatBot, ChatMessage], Awaitable[Any]]):
+        self.behaviors.append(behavior)
 
     async def _delayed_send(self, channel: str, text: str, delay: float = 1.0):
         await asyncio.sleep(delay)
@@ -39,19 +39,11 @@ class ChatResponder:
             await self.chat.send_message(channel, text)
 
     async def send_message(self, text: str, delay: float = 1.0):
-        await asyncio.create_task(self._delayed_send(self.channel, unique(text), delay))
+        await asyncio.create_task(self._delayed_send(self.channel, text, delay))
 
     async def on_message(self, msg: ChatMessage):
-        print(msg.user.name)
-        print(msg.text)
-        text_pred = lambda m: self.trigger_text in m.text
-        predicate = text_pred
-
-        if self.trigger_username is not None:
-            predicate = lambda m: text_pred(m) and self.trigger_username.lower() == m.user.name.lower()
-        if predicate(msg):
-            await self.send_message(self.response)
-        print()
+        for behavior in self.behaviors:
+            await behavior(self, msg)
 
     # Main function to run the bot
     async def run(self):
