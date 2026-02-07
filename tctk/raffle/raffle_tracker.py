@@ -44,7 +44,7 @@ class Raffle:
         if username not in Raffle.active_raffle.joiners:
             Raffle.active_raffle.joiners[username] = join_time
 
-class PRegex:
+class Regex:
     extract_amount_re = re.compile("a Multi-Raffle has begun for ([0-9]+) EastCoin")
     extract_duration_re = re.compile("it will end in ([0-9]+) Seconds")
     raffle_open_re = extract_amount_re
@@ -56,7 +56,7 @@ class PRegex:
     three_plus_winner_re = re.compile(raffle_close_template.format(f"({uname_re})(, ({uname_re}))*(,)? and ({uname_re})"))
     raffle_close_re = "all of the text until usernames start"
 
-class Regex:
+class TRegex:
     extract_amount_re = re.compile("l! gunR ([0-9]+) r! gunR")
     extract_duration_re = re.compile("l! gunR ([0-9]+) r! gunR")
     raffle_open_re = extract_amount_re

@@ -85,4 +85,4 @@ class Duel:
             })
 
     def save(self):
-        save(Raffle, self)
+        save(Duel, self)

@@ -13,10 +13,13 @@ U = TypeVar('U', bound=Enum)
 async def get_chat(conf: Config = Config.get()) -> Chat:
     # Set up twitch API instance and add user authentication
     twitch = await Twitch(conf.app.id, conf.app.secret)
-    auth = UserAuthenticator(twitch, conf.scopes)
+    auth = UserAuthenticator(twitch, conf.oauth_tokens.scopes)
     token, refresh_token = await auth.authenticate()
-    Config.persist_with(access_token=token, refresh_token=refresh_token)
-    await twitch.set_user_authentication(token, conf.scopes, refresh_token)
+    def update_tokens(c: Config):
+        c.oauth_tokens.access = token
+        c.oauth_tokens.refresh = refresh_token
+    Config.persist_with(update_tokens)
+    await twitch.set_user_authentication(token, conf.oauth_tokens.scopes, refresh_token)
 
     # Create chat instance
     chat = await Chat(twitch)
