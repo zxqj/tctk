@@ -1,21 +1,56 @@
+from typing import Type, Any
+
 import asyncclick as click
-from twitchAPI.type import ChatEvent
 
-from twitchAPI.chat import ChatMessage
+from . import BotFeature
+from .activity_log import ActivityLogFeature
 from .bot import ChatBot
-from dataclasses import dataclass
+from sys import modules
 
-from .raffle_tracker import make_raffle_tracker, TriggerResp
+from .raffle.raffle_tracker import RaffleFeature
 
-feature_repository = {'raffle_tracker': make_raffle_tracker(TriggerResp(
-    raffle_start_pred=lambda chat_msg: "Multi-Raffle" in chat_msg.text,
-    trigger_username="thestreameast",
-    response="!join"))}
+feature_registry: dict[str, Type[BotFeature]] = {
+    "raffle_tracker": RaffleFeature,
+    "activity_log": ActivityLogFeature,
+}
 
+feature_args: dict[str, list[Any]] = {
+    "raffle_tracker": ["horse_person00", "Glerp"]
+}
+# Variant C: custom validation callback (useful for complex rules)
+def _validate_features(ctx, param, value):
+    # value is a tuple when using nargs or multiple
+    invalid = [v for v in value if v not in feature_registry.keys()]
+    if invalid:
+        raise click.BadParameter(f"Invalid feature(s): {', '.join(invalid)}.  Possible values: [{', '.join(feature_registry.keys())}]")
+    return list(value)
 
 @click.command()
 @click.option("--channel", "-c", "channel", default="thestreameast")
-async def cli(channel):
-    responder = ChatBot(channel=channel)
-    features = [feature_repository["raffle_tracker"]]
-    await responder.run(features)
+@click.argument("features", nargs=-1, callback=_validate_features)
+async def cli(channel, features):
+    bot = ChatBot(channel=channel)
+
+    await bot.init()
+
+    feature_instances: list[BotFeature] = []
+
+    for feature in features:
+        if feature in feature_args:
+            feature_instances.append(feature_registry[feature](*feature_args[feature]))
+        else:
+            feature_instances.append(feature_registry[feature]())
+
+    for feature in feature_instances:
+        if hasattr(feature, "on_start"):
+            feature.on_start()
+
+    for feature in feature_instances:
+        for event_type, handler in feature.get_subscriptions():
+            bot.subscribe(event_type, handler)
+
+    await bot.run()
+
+    for feature in feature_instances:
+        if hasattr(feature, "on_exit"):
+            feature.on_exit()

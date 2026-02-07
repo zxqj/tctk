@@ -63,3 +63,26 @@ class Raffle:
 
     def save(self):
         save(Raffle, self)
+
+@dataclass
+class Duel:
+    initiator: pl.String
+    opponent: pl.String
+    offer_time: pl.UInt32
+    accepted: pl.Boolean
+    accepted_time: pl.UInt32
+    won: pl.Boolean
+
+    @classmethod
+    def load(cls):
+        if get_data_file_path(cls).exists():
+            read(cls)
+        else:
+            cls.store: DataFrame = DataFrame(schema={
+                "start_time": pl.UInt32,
+                "duration": pl.UInt8,
+                "amount": pl.UInt16
+            })
+
+    def save(self):
+        save(Raffle, self)
