@@ -22,7 +22,6 @@ class App:
 
 @dataclass
 class Config:
-    raffle_message: str
     app: App
     scopes: list[AuthScope]
     authorization_code: str

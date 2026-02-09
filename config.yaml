@@ -1,0 +1,9 @@
+access_token: xi5pi54k3ngyp8t84w2kcmb6217qda
+app:
+  id: 9mle7nm0ei1nyme6722l0zzyyyxig9
+  secret: zgxoy1xw3ks44ixz1igf9z3s3l4fbj
+authorization_code: unnecessary
+refresh_token: 5cfm9qwg6icktshvx0s3i64jmo6nrtau9vjgsi8ysznqazivmk
+scopes:
+- chat:edit
+- chat:read
