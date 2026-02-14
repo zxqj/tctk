@@ -1,9 +1,9 @@
-access_token: qz3ve07m0vruvsv7bcybhayo4mtueq
+access_token: 30smfqjursf5s647omyxn9iwufraep
 app:
   id: 9mle7nm0ei1nyme6722l0zzyyyxig9
   secret: zgxoy1xw3ks44ixz1igf9z3s3l4fbj
 authorization_code: unnecessary
-refresh_token: bd5lgzxh28gz7pe08e19wdnr2vbd51nvmjpyt87s6584fsg74v
+refresh_token: jt104zcpdyokvnid88rphy2hh4jwxijandedx9np8wy4n6swv4
 scopes:
 - chat:edit
 - chat:read
