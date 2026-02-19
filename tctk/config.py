@@ -24,11 +24,16 @@ class App:
 class Config:
     app: App
     scopes: list[AuthScope]
-    authorization_code: str
-    access_token: str
-    refresh_token: str
+    access_token: Optional[str] = None
+    refresh_token: Optional[str] = None
 
     conf: ClassVar[Optional[Config]] = None
+
+    def has_tokens(self):
+        return self.access_token is not None
+
+    def get_tokens(self):
+        return (self.access_token, self.refresh_token)
 
     @staticmethod
     def backup():
