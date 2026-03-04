@@ -4,11 +4,16 @@ from typing import Callable, Awaitable, Any, TypeVar, Optional
 from twitchAPI.twitch import Twitch
 from twitchAPI.chat import Chat, ChatEvent, ChatCommand, ChatMessage, EventData
 from twitchAPI.oauth import UserAuthenticator
+from twitchAPI.type import InvalidRefreshTokenException
 from .config import Config
 import asyncio
 
 U = TypeVar('U', bound=Enum)
 
+async def get_and_persist(auth):
+    token, refresh_token = await auth.authenticate()
+    Config.persist_with(access_token=token, refresh_token=refresh_token)
+    return Config.get()
 # Define the required scopes
 async def get_chat(conf: Config = Config.get()) -> Chat:
     # Set up twitch API instance and add user authentication
@@ -16,13 +21,21 @@ async def get_chat(conf: Config = Config.get()) -> Chat:
     twitch.user_auth_refresh_callback = lambda acc, ref: Config.persist_with(access_token=acc, refresh_token=ref)
     auth = UserAuthenticator(twitch, conf.scopes)
     if not conf.has_tokens():
-        token, refresh_token = await auth.authenticate()
-        Config.persist_with(access_token=token, refresh_token=refresh_token)
-        conf = Config.get()
+        conf = get_and_persist(auth)
 
     token, refresh_token = conf.get_tokens()
-    await twitch.set_user_authentication(token, conf.scopes, refresh_token, True)
-
+    resp = twitch.set_user_authentication(token, conf.scopes, refresh_token, True)
+    if resp is None:
+        conf = await get_and_persist(auth)
+        token, refresh_token = conf.get_tokens()
+        await twitch.set_user_authentication(token, conf.scopes, refresh_token, True)
+    else:
+        try:
+            await resp
+        except InvalidRefreshTokenException:
+            conf = await get_and_persist(auth)
+            token, refresh_token = conf.get_tokens()
+            await twitch.set_user_authentication(token, conf.scopes, refresh_token, True)
     # Create chat instance
     chat = await Chat(twitch)
     return twitch, chat
