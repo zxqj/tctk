@@ -1,5 +1,4 @@
 from click.testing import CliRunner
-from streameast.cli import cli
 
 
 def version():

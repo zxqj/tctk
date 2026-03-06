@@ -2,17 +2,15 @@ from dataclasses import dataclass
 import yaml
 from typing import ClassVar, Optional, Callable
 import dataclasses
-from dataclasses import dataclass
 from pathlib import Path
 
 from twitchAPI.type import AuthScope
 import os
 
-def conf_path():
-    env_val = os.getenv("TWITCH_CREDENTIALS_PATH")
-    if env_val is not None:
-        return Path(env_val)
-    return Path('./config.yaml')
+CONFIG_FILE = Path(__file__).resolve().parent.parent.joinpath('config.yaml')
+
+def conf_path() -> Path:
+    return CONFIG_FILE
 
 @dataclass
 class App:
@@ -35,11 +33,24 @@ class MessageTemplates:
 
 @dataclass
 class Config:
-    message_templates: MessageTemplates
     app: App
     oauth_tokens: OauthTokens
+    rdbms_connection_string: str
     conf: ClassVar[Optional[Config]] = None
 
+    @staticmethod
+    def build_type():
+        bt = os.getenv('APP_ENV')
+        valid_build_types = {"test", "production", "staging"}
+        if bt is None or bt not in valid_build_types:
+            raise ValueError(f"build type must be set to one of [{', '.join(valid_build_types)}] via the APP_ENV environment variable")
+        return bt
+
+    @staticmethod
+    def data_dir():
+        suff = {"production": "", "test": "/test", "staging": "/staging"}
+        s = suff[Config.build_type()]
+        return Path.home().joinpath(f"var/log/tctk{s}")
 
     @staticmethod
     def backup():
@@ -65,7 +76,6 @@ class Config:
                 yaml_dict: dict = yaml.safe_load(f)
                 yaml_dict['app'] = App(**yaml_dict['app'])
                 yaml_dict['oauth_tokens'] = OauthTokens(**yaml_dict['oauth_tokens'])
-                yaml_dict['message_templates'] = MessageTemplates(**yaml_dict['message_templates'])
                 Config.conf = Config(**yaml_dict)
                 Config.conf.oauth_tokens.scopes = [AuthScope(s) for s in Config.conf.oauth_tokens.scopes]
         return Config.conf

@@ -3,9 +3,8 @@ from typing import Type, Any
 import asyncclick as click
 
 from . import BotFeature
-from .activity_log import ActivityLogFeature
+from tctk.activity_log.activity_log import ActivityLogFeature
 from .bot import ChatBot
-from sys import modules
 
 from .raffle.raffle_tracker import RaffleFeature
 
