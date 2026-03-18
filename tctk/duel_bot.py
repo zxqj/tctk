@@ -10,9 +10,10 @@ history = dict()
 class DuelBotFeature(MessageBotFeature):
     async def on_message(self, msg: ChatMessage, sender: ChannelSender):
         duel = Duel.from_proposal(msg)
-        if duel.duel_offer_recipient == sender.username:
-            if duel.amount > 100:
-                sender.send("Until the bot acquires more coin, the max duel is 100")
-            else:
-                sender.send("!accept")
+        if duel is not None:
+            if duel.duel_offer_recipient == sender.username:
+                if duel.amount > 1000:
+                    await sender.send("!deny Fricc Duel less.")
+                else:
+                    await sender.send_unique("!accept")
 

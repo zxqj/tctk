@@ -11,7 +11,7 @@ class Duel:
     duel_offerer: str
     amount: int
     proposal_time: int
-    duel_offerer_win: Optional[bool]
+    duel_offerer_win: Optional[bool] = None
 
     @staticmethod
     def from_proposal(msg: ChatMessage):
@@ -22,7 +22,7 @@ class Duel:
             d['proposal_time'] = msg.sent_timestamp
             return Duel(**d)
         else:
-            raise ValueError
+            return None
 
 
 duel_complete = 'dookiebetts800 won the Duel vs aallldeeeez PogChamp dookiebetts800 won 348 eastcoins FeelsGoodMan'

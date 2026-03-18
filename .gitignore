@@ -7,3 +7,8 @@ venv
 .pytest_cache
 *.egg-info
 .DS_Store
+config.yaml
+.claudeignore
+*.code-workspace
+.idea
+twitch_auth.txt

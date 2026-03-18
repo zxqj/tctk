@@ -26,7 +26,7 @@ feature_registry: dict[str, Type[BotFeature]] = {
 }
 
 feature_args: dict[str, dict[str, Any]] = {
-    "raffle_tracker": {"raffle_bot_username": "horse_person00"}
+    "raffle_tracker": {"raffle_bot_username": "streamelements"}
 }
 # Variant C: custom validation callback (useful for complex rules)
 def _validate_features(ctx, param, value):

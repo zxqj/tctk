@@ -1,0 +1,28 @@
+app:
+  id: [[FILL IN OR DELETE]]
+  secret: [[FILL IN OR DELETE]]
+scopes:
+- chat:edit
+- chat:read
+rdbms_connection_string: postgres://postgres:password@0.0.0.0:5434/dbname
+auto_timeout_words:
+  - zendaya
+  - nickelodeon
+  - trump
+  - biden
+  - obama
+  - spongebob
+  - black
+  - incoming
+  - dodge
+  - d0dge
+  - doge
+  - d0ge
+  - d0g3
+  - dodgy
+  - d0dgy
+  - sp0ngebob
+  - sp0ngeb0b
+  - zendeya
+default_raffle_bot_user: [[fill in or delete]]
+channel: [[fill in or delete]]
