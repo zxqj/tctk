@@ -9,8 +9,17 @@ from twitchAPI.type import ChatEvent
 from random import randint
 from datetime import datetime
 import re
+from tctk.config import Command, Config
+from tctk.message_bot import MessageBotFeature
 from tctk.store import Raffle as RaffleStore
 from tctk.store import UserRaffle
+import pydash as py
+
+def clone_without(obj, *paths):
+    cloned = py.clone_deep(obj)      # deep copy, original stays unchanged
+    for path in paths:
+        py.unset(cloned, path)       # deep path: "user.password", "items[0].debug"
+    return cloned
 
 class Raffle:
     active_raffle = None
@@ -26,9 +35,14 @@ class Raffle:
         for joiner, join_time in self.joiners.items():
             UserRaffle(joiner, self.start_time, joiner in self.winners, join_time).save()
 
+    def did_win(self, name: str):
+        return name.casefold() in {x.casefold() for x in self.winners}
+    
+    def did_join(self, name: str):
+        return name.casefold() in {x.casefold() for x in self.joiners}
+    
     @staticmethod
     def close_raffle(winners: list[str]):
-        Raffle.active_raffle.persist()
         Raffle.active_raffle.winners = set(winners)
 
     @staticmethod
@@ -44,19 +58,19 @@ class Raffle:
         if username not in Raffle.active_raffle.joiners:
             Raffle.active_raffle.joiners[username] = join_time
 
-class PRegex:
+class Regex:
     extract_amount_re = re.compile("a Multi-Raffle has begun for ([0-9]+) EastCoin")
     extract_duration_re = re.compile("it will end in ([0-9]+) Seconds")
     raffle_open_re = extract_amount_re
-
-    raffle_close_template = "all of the text up until usernames start{0}text after players"
     uname_re = "[\\w]{3,24}"
-    one_winner_re = re.compile(raffle_close_template.format(uname_re))
-    two_winner_re = re.compile(raffle_close_template.format(f"{uname_re} and {uname_re}"))
-    three_plus_winner_re = re.compile(raffle_close_template.format(f"({uname_re})(, ({uname_re}))*(,)? and ({uname_re})"))
-    raffle_close_re = "all of the text until usernames start"
+    raffle_close_re = re.compile("The Multi-Raffle has ended and {0} won [0-9]+ EastCoin each FeelsGoodMan".format(uname_re))
+    
+    #one_winner_re = re.compile(raffle_close_template.format(uname_re))
+    #two_winner_re = re.compile(raffle_close_template.format(f"{uname_re} and {uname_re}"))
+    #three_plus_winner_re = re.compile(raffle_close_template.format(f"({uname_re})(, ({uname_re}))*(,)? and ({uname_re})"))
+    
 
-class Regex:
+class PRegex:
     extract_amount_re = re.compile("l! gunR ([0-9]+) r! gunR")
     extract_duration_re = re.compile("l! gunR ([0-9]+) r! gunR")
     raffle_open_re = extract_amount_re
@@ -86,11 +100,11 @@ def extract_winners(txt: str):
     print(f"Could not extract winners from {txt} {datetime.now().timestamp()}")
     return None
 
-def extract_amt_dur(txt: str):
+def extract_dur_amt(txt: str):
     groups = Regex.extract_amount_re.search(txt).groups()
     amount = int(groups[0])
     groups = Regex.extract_duration_re.search(txt).groups()
-    return amount, int(groups[0])
+    return int(groups[0]), amount
 
 randhex = lambda d: hex(randint(0,16**d - 1)).split("x")[1].rjust(d,"0")
 unique = lambda s: f"{s} {randhex(4)}"
@@ -100,33 +114,44 @@ class RaffleEvent(StrEnum):
     JOIN = auto()
     CLOSE = auto()
 
-def join_predicate(msg: ChatMessage, join_command):
-    is_join_re = re.compile(f'(^| ){join_command} ')
+@dataclass
+class RaffleEventData:
+    message: ChatMessage
+    raffle: Raffle
+
+def join_predicate(msg: ChatMessage):
+    is_join_re = re.compile('( |^)'+str(Command.raffle_join) + '\\b')
     return Raffle.is_active_raffle() and is_join_re.search(msg.text) is not None
 
 def raffle_open_predicate(msg: ChatMessage, raffle_bot_username):
-    return (msg.user.name.lower() == raffle_bot_username.lower() and
-            Regex.raffle_open_re.match(msg.text) is not None)
+    return (msg.user.name.casefold() == raffle_bot_username.casefold() and
+            Regex.raffle_open_re.search(msg.text) is not None)
 
 def raffle_close_predicate(msg: ChatMessage, raffle_bot_username):
-    return msg.user.name.lower() == raffle_bot_username.lower() and Regex.raffle_close_re.search(msg.text) is not None
+    return msg.user.name.casefold() == raffle_bot_username.casefold() and Regex.raffle_close_re.search(msg.text) is not None
 
-class RaffleFeature(BotFeature):
-    def __init__(self, raffle_bot_username, join_command):
+class RaffleFeature(MessageBotFeature):
+    def __init__(self, raffle_bot_username = Config.get().default_raffle_bot_user):
         self.raffle_bot_username = raffle_bot_username
-        self.join_command = join_command
 
-    def get_subscriptions(self) -> list[tuple[ChatEvent, Callable[[EventData, ChannelSender], Awaitable[Any]]]]:
-        return [
-            (ChatEvent.MESSAGE, self.on_message),
-        ]
+    async def on_open(self, raffle_event_data: RaffleEventData, sender: ChannelSender):
+        pass
+
+    async def on_join(self, raffle_event_data: RaffleEventData, sender: ChannelSender):
+        pass
+
+    async def on_close(self, raffle_event_data: RaffleEventData, sender: ChannelSender):
+        pass
 
     async def on_message(self, msg: ChatMessage, c: ChannelSender):
+        print(msg.__dict__)
         if raffle_close_predicate(msg, self.raffle_bot_username):
             Raffle.close_raffle(extract_winners(msg.text))
-        if join_predicate(msg, self.join_command):
-            Raffle.join_raffle(msg.user.name, round(datetime.now().timestamp()))
-        if raffle_open_predicate(msg, self.raffle_bot_username):
-            start_time = datetime.now().timestamp()
-            Raffle.set_active_raffle(Raffle(start_time, *extract_amt_dur(msg.text)))
-            await c.send(unique(self.join_command), delay=1.0)
+            await self.on_close(RaffleEventData(msg, Raffle.active_raffle), c)
+        elif join_predicate(msg):
+            Raffle.join_raffle(msg.user.name, msg.sent_timestamp)
+            await self.on_join(RaffleEventData(msg, Raffle.active_raffle), c)
+        elif raffle_open_predicate(msg, self.raffle_bot_username):
+            start_time = msg.sent_timestamp
+            Raffle.set_active_raffle(Raffle(start_time, *extract_dur_amt(msg.text)))
+            await self.on_open(RaffleEventData(msg, Raffle.active_raffle), c)

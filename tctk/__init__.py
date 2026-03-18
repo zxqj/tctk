@@ -6,5 +6,11 @@ from twitchAPI.type import ChatEvent
 
 
 class BotFeature:
+    def on_start(self):
+        pass
+
     def get_subscriptions(self) -> list[tuple[ChatEvent, Callable[[EventData, ChannelSender], Awaitable[Any]]]]:
+        pass
+
+    def on_exit(self):
         pass

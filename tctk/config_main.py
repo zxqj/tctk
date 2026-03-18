@@ -1,26 +1,27 @@
 from dataclasses import dataclass
-from enum import StrEnum, auto
-from logging import Logger
 import yaml
-from typing import ClassVar, Optional, Callable, Self
+from typing import ClassVar, Optional, Callable
 import dataclasses
 from pathlib import Path
-import logging
-import logging.config
+
 from twitchAPI.type import AuthScope
 import os
 
-PROJECT_DIR = Path(__file__).resolve().parent.parent
+CONFIG_FILE = Path(__file__).resolve().parent.parent.joinpath('config.yaml')
 
 def conf_path() -> Path:
-    return PROJECT_DIR.joinpath('config.yaml')
+    return CONFIG_FILE
 
-def logging_conf_path() -> Path:
-    return PROJECT_DIR.joinpath("logging.yaml")
 @dataclass
 class App:
     id: str
     secret: str
+
+@dataclass
+class OauthTokens:
+    access: Optional[str]
+    refresh: Optional[str]
+    scopes: list[AuthScope]
 
 @dataclass
 class MessageTemplates:
@@ -30,32 +31,16 @@ class MessageTemplates:
     duel_proposed: str
     give: str
 
-class Command(StrEnum):
-    give = auto()
-    raffle_join = "join"
-    duel = auto()
-
-    #my commands
-    rinse = auto()
-    
-    def __str__(self):
-        return f"!{self.value}"
-
-    def __call__(self, *args):
-        l = [str(self), *[str(arg) for arg in args]]
-        return " ".join(l)
-
 @dataclass
 class Config:
     app: App
-    scopes: list[AuthScope]
+    oauth_tokens: OauthTokens
     rdbms_connection_string: str
-    auto_timeout_words: str
-    default_raffle_bot_user: str
-    channel: str
     conf: ClassVar[Optional[Config]] = None
-    log_conf_loaded: ClassVar[bool] = False
-
+    
+    def has_tokens(self) -> bool:
+        val = self.oauth_tokens is not None
+        val = val and oauth_tokens.
     @staticmethod
     def build_type():
         bt = os.getenv('APP_ENV')
@@ -74,6 +59,7 @@ class Config:
     def backup():
         Config.conf = Config.get()
         d = dataclasses.asdict(Config.conf)
+        d['oauth_tokens']['scopes'] = [s.value for s in d['oauth_tokens']['scopes']]
         with conf_path().with_suffix(".back").open('w') as f:
             yaml.dump(d, f)
 
@@ -82,26 +68,17 @@ class Config:
         Config.conf = Config.get()
         update(Config.conf)
         d = dataclasses.asdict(Config.conf)
+        d['oauth_tokens']['scopes'] = [s.value for s in d['oauth_tokens']['scopes']]
         with conf_path().open('w') as f:
             yaml.dump(d, f)
 
     @staticmethod
-    def get() -> Self:
+    def get():
         if Config.conf is None:
             with conf_path().open() as f:
                 yaml_dict: dict = yaml.safe_load(f)
                 yaml_dict['app'] = App(**yaml_dict['app'])
+                yaml_dict['oauth_tokens'] = OauthTokens(**yaml_dict['oauth_tokens'])
                 Config.conf = Config(**yaml_dict)
-                Config.conf.scopes = [AuthScope(s) for s in Config.conf.scopes]
+                Config.conf.oauth_tokens.scopes = [AuthScope(s) for s in Config.conf.oauth_tokens.scopes]
         return Config.conf
-
-    @staticmethod
-    def logger(module: str, reload: bool = False) -> Logger:
-        def configure_logging():
-            with logging_conf_path().open("r") as f:
-                config = yaml.safe_load(f.read())
-                logging.config.dictConfig(config)
-        if reload or not Config.log_conf_loaded:
-            configure_logging()
-            Config.log_conf_loaded = True
-        return logging.getLogger(__name__)

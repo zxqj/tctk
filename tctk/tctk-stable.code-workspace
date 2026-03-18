@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../haskell-twitchapi"
+		},
+		{
+			"path": "../../pyTwitchAPI"
+		}
+	],
+	"settings": {}
+}

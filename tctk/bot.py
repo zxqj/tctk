@@ -1,41 +1,41 @@
-from enum import Enum
+from enum import Enum, StrEnum, auto
+from pathlib import Path
 from typing import Callable, Awaitable, Any, TypeVar, Optional
 
 from twitchAPI.twitch import Twitch
 from twitchAPI.chat import Chat, ChatEvent, ChatCommand, ChatMessage, EventData
-from twitchAPI.oauth import UserAuthenticator
-from twitchAPI.type import InvalidRefreshTokenException
+from twitchAPI.oauth import UserAuthenticationStorageHelper, UserAuthenticator
+from twitchAPI.type import AuthScope
 from .config import Config
 import asyncio
+import emoji
+from secrets import choice
 
-U = TypeVar('U', bound=Enum)
+U = TypeVar('U', bound=Enum)        
 
-async def get_and_persist(auth):
-    token, refresh_token = await auth.authenticate()
-    Config.persist_with(access_token=token, refresh_token=refresh_token)
-    return Config.get()
+def rand_emoji():
+    return choice([*emoji.EMOJI_DATA.keys()])
+
+async def show_user_auth_url(url: str):
+    print(f"navigate to {url} to authorize twitch")
+
 # Define the required scopes
 async def get_chat(conf: Config = Config.get()) -> Chat:
     # Set up twitch API instance and add user authentication
     twitch = await Twitch(conf.app.id, conf.app.secret)
-    twitch.user_auth_refresh_callback = lambda acc, ref: Config.persist_with(access_token=acc, refresh_token=ref)
-    auth = UserAuthenticator(twitch, conf.scopes)
-    if not conf.has_tokens():
-        conf = get_and_persist(auth)
 
-    token, refresh_token = conf.get_tokens()
-    resp = twitch.set_user_authentication(token, conf.scopes, refresh_token, True)
-    if resp is None:
-        conf = await get_and_persist(auth)
-        token, refresh_token = conf.get_tokens()
-        await twitch.set_user_authentication(token, conf.scopes, refresh_token, True)
-    else:
-        try:
-            await resp
-        except InvalidRefreshTokenException:
-            conf = await get_and_persist(auth)
-            token, refresh_token = conf.get_tokens()
-            await twitch.set_user_authentication(token, conf.scopes, refresh_token, True)
+    async def get_tokens(t: Twitch, scopes: list[AuthScope]):
+        auth = UserAuthenticator(twitch, scopes)
+        token, refresh_token = await auth.authenticate(use_browser=False, auth_url_callback=show_user_auth_url)
+        return (token, refresh_token)
+
+    storage_helper = UserAuthenticationStorageHelper(
+        twitch,
+        storage_path=Path("twitch_auth.txt"),
+        scopes=conf.scopes,
+        auth_generator_func=get_tokens
+    )
+    await storage_helper.bind()
     # Create chat instance
     chat = await Chat(twitch)
     return twitch, chat
@@ -57,6 +57,9 @@ class ChannelSender(Chat):
 
     async def send_message(self, text: str, delay: float = None):
         await asyncio.create_task(self._delayed_send(text, delay))
+
+    async def send_unique(self, text: str, delay: float = None):
+        await asyncio.create_task(self._delayed_send(f"{text} {rand_emoji()}", delay))
 
     async def send(self, text: str, delay: Optional[float] = None):
         await self.send_message(text, delay)
