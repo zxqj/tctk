@@ -23,6 +23,8 @@ from signal import Signals
 from dataclasses import dataclass
 from typing import TypedDict
 
+from tctk.bot import ChatBot
+
 class HandlerKwargs(TypedDict, total=False):
     signal: Signals
     update_reason: "UPDATE_REASON"
@@ -255,7 +257,7 @@ class ActivityLogFeature(BotFeature):
         print("Activity log started")
         self.persistence = ActivityLogPersistence()
 
-    def on_exit(self):
+    def on_exit(self, bot: ChatBot):
         self.persistence.persist()
 
     async def catch_all(self, evt: ChatEvent, event_data: EventData):

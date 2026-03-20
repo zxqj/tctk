@@ -8,7 +8,7 @@ logger = Config.logger(__name__)
 class GiveawayRaffleFeature(RaffleFeature):
     def __init__(self, *args):
         super().__init__(*args)
-    
+
     async def on_open(self, event_data, sender):
         logger.debug("on open event")
         logger.debug(event_data.raffle.amount)
@@ -39,7 +39,7 @@ class GiveawayRaffleFeature(RaffleFeature):
 class RaffleReportFeature(RaffleFeature):
     def __init__(self, *args):
         super().__init__(*args)
-    
+
     async def on_close(self, event_data: RaffleEventData, sender: ChannelSender):
         participant_count = len(event_data.raffle.joiners)
         success_prob = len(event_data.raffle.winners)/participant_count

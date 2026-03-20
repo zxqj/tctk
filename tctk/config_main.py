@@ -37,7 +37,7 @@ class Config:
     oauth_tokens: OauthTokens
     rdbms_connection_string: str
     conf: ClassVar[Optional[Config]] = None
-    
+
     def has_tokens(self) -> bool:
         val = self.oauth_tokens is not None
         val = val and oauth_tokens.

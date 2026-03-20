@@ -4,7 +4,7 @@ disable_existing_loggers: False
 formatters:
   json_pretty:
     # Use the class from the installed library
-    '()': pythonjsonlogger.jsonlogger.JsonFormatter
+    '()': tctk.log_formatter.ColoredJsonFormatter
     # include pathname and lineno so JSON contains file and line info
     format: "%(asctime)s %(levelname)s %(name)s %(pathname)s %(lineno)d %(message)s"
     rename_fields:

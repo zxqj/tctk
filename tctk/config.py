@@ -37,7 +37,8 @@ class Command(StrEnum):
 
     #my commands
     rinse = auto()
-    
+    withdraw = auto()
+
     def __str__(self):
         return f"!{self.value}"
 
@@ -53,6 +54,7 @@ class Config:
     auto_timeout_words: str
     default_raffle_bot_user: str
     channel: str
+    max_duel_amt: int = 2500
     conf: ClassVar[Optional[Config]] = None
     log_conf_loaded: ClassVar[bool] = False
 

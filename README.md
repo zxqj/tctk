@@ -36,4 +36,4 @@ To run the tests:
 ```bash
 python -m pytest
 ```
-copy config.example.yaml to config.yaml and fill in 
+copy config.example.yaml to config.yaml and fill in

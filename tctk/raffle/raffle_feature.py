@@ -37,10 +37,10 @@ class Raffle:
 
     def did_win(self, name: str):
         return name.casefold() in {x.casefold() for x in self.winners}
-    
+
     def did_join(self, name: str):
         return name.casefold() in {x.casefold() for x in self.joiners}
-    
+
     @staticmethod
     def close_raffle(winners: list[str]):
         Raffle.active_raffle.winners = set(winners)
@@ -64,11 +64,11 @@ class Regex:
     raffle_open_re = extract_amount_re
     uname_re = "[\\w]{3,24}"
     raffle_close_re = re.compile("The Multi-Raffle has ended and {0} won [0-9]+ EastCoin each FeelsGoodMan".format(uname_re))
-    
+
     #one_winner_re = re.compile(raffle_close_template.format(uname_re))
     #two_winner_re = re.compile(raffle_close_template.format(f"{uname_re} and {uname_re}"))
     #three_plus_winner_re = re.compile(raffle_close_template.format(f"({uname_re})(, ({uname_re}))*(,)? and ({uname_re})"))
-    
+
 
 class PRegex:
     extract_amount_re = re.compile("l! gunR ([0-9]+) r! gunR")

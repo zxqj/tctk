@@ -11,7 +11,7 @@ import asyncio
 import emoji
 from secrets import choice
 
-U = TypeVar('U', bound=Enum)        
+U = TypeVar('U', bound=Enum)
 
 def rand_emoji():
     return choice([*emoji.EMOJI_DATA.keys()])
@@ -74,6 +74,13 @@ class ChatBot(EventEmitter[ChatEvent, EventData]):
         self.channel = channel
         self.chat = None
 
+    @classmethod
+    async def create(cls, channel, subscriptions: list[tuple] = None):
+        self = cls(channel)
+        await self.init(subscriptions or [])
+        print(hasattr(self, "sender"))
+        return self
+
     def subscribe(self, t: ChatEvent, cb: Callable[[EventData, ChannelSender], Awaitable[Any]]) -> None:
         async def handler(*args):
             arg_list = list(args)
@@ -82,21 +89,27 @@ class ChatBot(EventEmitter[ChatEvent, EventData]):
         self.chat.register_event(t, handler)
 
     # Main function to run the bot
-    async def init(self):
+    async def init(self, subscriptions: list[tuple] = None):
         twitch, chat = await get_chat()
         self.chat = chat
         self.twitch = twitch
 
+        for event_type, handler in (subscriptions or []):
+            self.subscribe(event_type, handler)
+
         # Connect and join the channel
         chat.start()
+        self.sender = ChannelSender(self.chat, self.channel)
         await chat.join_room(self.channel)
 
-    async def run(self):
+    async def run(self, before_stop: list[Callable[[], Awaitable[Any]]] | None = None):
         print('Bot is running. Press ENTER to stop.')
         loop = asyncio.get_running_loop()
         try:
             await loop.run_in_executor(None, input)
         finally:
+            for cb in (before_stop or []):
+                await cb()
             # Stop the bot and close the connection
             self.chat.stop()
             await self.twitch.close()
