@@ -14,13 +14,13 @@ class GiveawayRaffleFeature(RaffleFeature):
         logger.debug(event_data.raffle.amount)
         logger.debug(event_data.raffle.duration)
         logger.debug(event_data.raffle.start_time)
-        logger.debug()
+        logger.debug("------------")
         return await sender.send_unique(Command.raffle_join())
 
     async def on_join(self, event_data, sender):
-        logger.debug()
+        logger.debug(" ")
         logger.debug("on join event")
-        logger.debug()
+        logger.debug("     ")
         pass
 
     async def on_close(self, event_data: RaffleEventData, sender: ChannelSender):

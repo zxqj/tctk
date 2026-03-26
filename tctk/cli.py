@@ -28,9 +28,6 @@ feature_registry: dict[str, Type[BotFeature]] = {
     "status_notification": StatusNotificationFeature,
 }
 
-feature_args: dict[str, dict[str, Any]] = {
-    "raffle_tracker": {"raffle_bot_username": "streamelements"}
-}
 # Variant C: custom validation callback (useful for complex rules)
 def _validate_features(ctx, param, value):
     # value is a tuple when using nargs or multiple
@@ -55,6 +52,9 @@ def _validate_features(ctx, param, value):
 @click.argument("features", nargs=-1, callback=_validate_features)
 async def cli(channel, updates, features):
     feature_instances: list[BotFeature] = []
+    feature_args: dict[str, dict[str, Any]] = {
+        "raffle_tracker": {"raffle_bot_username": Config.get().raffle_authority_user}
+    }
     if updates is not None:
         feature_args['status_notification'] = { "updates_message": updates }
 
@@ -76,8 +76,11 @@ async def cli(channel, updates, features):
 
     bot = await ChatBot.create(channel=channel, subscriptions=subscriptions)
 
-    for feature in feature_instances:
-        if iscoroutinefunction(feature.on_exit):
-            await feature.on_exit(bot.sender)
-        else:
-            feature.on_exit(bot.sender)
+    async def stop_features():
+        for feature in feature_instances:
+            if iscoroutinefunction(feature.on_exit):
+                await feature.on_exit(bot.sender)
+            else:
+                feature.on_exit(bot.sender)
+
+    await bot.run(before_stop=[stop_features])

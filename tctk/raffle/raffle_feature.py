@@ -131,7 +131,7 @@ def raffle_close_predicate(msg: ChatMessage, raffle_bot_username):
     return msg.user.name.casefold() == raffle_bot_username.casefold() and Regex.raffle_close_re.search(msg.text) is not None
 
 class RaffleFeature(MessageBotFeature):
-    def __init__(self, raffle_bot_username = Config.get().default_raffle_bot_user):
+    def __init__(self, raffle_bot_username = Config.get().raffle_authority_user):
         self.raffle_bot_username = raffle_bot_username
 
     async def on_open(self, raffle_event_data: RaffleEventData, sender: ChannelSender):
@@ -144,7 +144,6 @@ class RaffleFeature(MessageBotFeature):
         pass
 
     async def on_message(self, msg: ChatMessage, c: ChannelSender):
-        print(msg.__dict__)
         if raffle_close_predicate(msg, self.raffle_bot_username):
             Raffle.close_raffle(extract_winners(msg.text))
             await self.on_close(RaffleEventData(msg, Raffle.active_raffle), c)

@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from enum import StrEnum, auto
-from logging import Logger
 import yaml
 from typing import ClassVar, Optional, Callable, Self
 import dataclasses
@@ -9,6 +8,7 @@ import logging
 import logging.config
 from twitchAPI.type import AuthScope
 import os
+from tctk.log_formatter import TctkLogger
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 
@@ -34,7 +34,8 @@ class Command(StrEnum):
     give = auto()
     raffle_join = "join"
     duel = auto()
-
+    deny = auto()
+    accept = auto()
     #my commands
     rinse = auto()
     withdraw = auto()
@@ -52,9 +53,11 @@ class Config:
     scopes: list[AuthScope]
     rdbms_connection_string: str
     auto_timeout_words: str
-    default_raffle_bot_user: str
+    raffle_authority_user: str
+    duel_authority_user: str
     channel: str
-    max_duel_amt: int = 2500
+    max_duel_amt: int
+    bot_access_tokens_file: str
     conf: ClassVar[Optional[Config]] = None
     log_conf_loaded: ClassVar[bool] = False
 
@@ -98,7 +101,7 @@ class Config:
         return Config.conf
 
     @staticmethod
-    def logger(module: str, reload: bool = False) -> Logger:
+    def logger(module: str, reload: bool = False) -> TctkLogger:
         def configure_logging():
             with logging_conf_path().open("r") as f:
                 config = yaml.safe_load(f.read())
@@ -106,4 +109,5 @@ class Config:
         if reload or not Config.log_conf_loaded:
             configure_logging()
             Config.log_conf_loaded = True
-        return logging.getLogger(__name__)
+
+        return logging.getLogger(module)

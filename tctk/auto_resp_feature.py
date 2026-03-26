@@ -34,7 +34,7 @@ async def kon(msg: ChatMessage, sender: ChannelSender):
             text = msg.text.replace("Concern", "")
             for match in CON_WORD_PATTERN.finditer(text):
                 response = replace_con_words(match.group())
-                response = f"bUrself {response}? bUrself LETSGOOO"
+                response = f"bUrself {response} ? bUrself LETSGOOO"
                 await sender.send_unique(response)
 
 async def are_mod(msg: ChatMessage, sender: ChannelSender):
@@ -63,7 +63,8 @@ async def andy_done(msg: ChatMessage, sender: ChannelSender):
 decorators: list[Callable[[ChatMessage, ChannelSender], Awaitable[None]]] = [
     nut,
     are_mod,
-    bank
+    bank,
+    kon
 ]
 @dataclass
 class AutoRespFeature(MessageBotFeature):
