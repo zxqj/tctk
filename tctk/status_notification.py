@@ -16,7 +16,7 @@ async def message_obj(obj, sender: ChannelSender):
     buffer.seek(0)
     await sender.send_unique(buffer.read())
 FUCKING_ARE_MOD = ''.join([chr(x) for x in [120172, 120189, 120176, 32, 120184, 120186, 120175]])
-                          
+
 ready_message = f"{FUCKING_ARE_MOD} has entered the chat HandsUp"
 @dataclass
 class StatusNotificationFeature(BotFeature):

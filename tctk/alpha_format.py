@@ -142,5 +142,5 @@ ALPHA_FORMAT_CODEPOINTS: AlphaCodePointMap = {
 class AlphaFormatIO:
     def __init__(self, fmt: AlphaFormat):
         self.fmt = fmt
-    
-    
+
+
