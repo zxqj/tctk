@@ -6,7 +6,9 @@ import dataclasses
 from pathlib import Path
 import logging
 import logging.config
+from string import ascii_lowercase, ascii_uppercase
 from twitchAPI.type import AuthScope
+import unicodedata
 import os
 from tctk.log_formatter import TctkLogger
 

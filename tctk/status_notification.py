@@ -15,7 +15,9 @@ async def message_obj(obj, sender: ChannelSender):
     json.dump(obj, buffer, indent=2)
     buffer.seek(0)
     await sender.send_unique(buffer.read())
-
+FUCKING_ARE_MOD = ''.join([chr(x) for x in [120172, 120189, 120176, 32, 120184, 120186, 120175]])
+                          
+ready_message = f"{FUCKING_ARE_MOD} has entered the chat HandsUp"
 @dataclass
 class StatusNotificationFeature(BotFeature):
     updates_message: Optional[str] = None
@@ -36,7 +38,7 @@ class StatusNotificationFeature(BotFeature):
             }, sender)
 
         async def on_ready(event_data: EventData, sender: ChannelSender):
-            await sender.send_unique("POLICE are_mod is READY gachiHYPER POLICE")
+            await sender.send_unique(ready_message)
             if self.updates_message is not None:
                 await sender.send_unique(f"POLICE Bot updates! {self.updates_message} POLICE")
 
@@ -46,5 +48,5 @@ class StatusNotificationFeature(BotFeature):
 
     async def on_exit(self, sender: ChannelSender):
         return await sender.send_unique(
-            "POLICE are_mod is going down for maintenance Salute POLICE"
+            "Salute are_mod is going down for maintenance Salute POLICE"
         )
