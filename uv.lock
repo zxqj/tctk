@@ -185,15 +185,6 @@ wheels = [
 ]
 
 [[package]]
-name = "homoglyphs"
-version = "2.0.4"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/42/a8/33ee2cc828318714563991144c56c42f4d1126487b6f166fe8f80800652b/homoglyphs-2.0.4.tar.gz", hash = "sha256:18c9f235f54fd0467dc3145fe82c33c7faaf7fc8ce5559ab26abcc83f5780da6", size = 88304, upload-time = "2020-10-16T14:25:48.282Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/37/43/b4f6c03bef205840e966f6cf4845462c6221777388a572b48a46496efbbf/homoglyphs-2.0.4-py3-none-any.whl", hash = "sha256:bdcdb00cc46880b8479c51084b7652bf7992d044a80abee8d5afc0a3b2bdb5c8", size = 88429, upload-time = "2020-10-16T14:25:51.042Z" },
-]
-
-[[package]]
 name = "idna"
 version = "3.11"
 source = { registry = "https://pypi.org/simple" }
@@ -506,7 +497,6 @@ source = { editable = "." }
 dependencies = [
     { name = "asyncclick" },
     { name = "emoji" },
-    { name = "homoglyphs" },
     { name = "polars" },
     { name = "pydash" },
     { name = "python-box", extra = ["all"] },
@@ -530,7 +520,6 @@ dev = [
 requires-dist = [
     { name = "asyncclick" },
     { name = "emoji", specifier = ">=2.15.0" },
-    { name = "homoglyphs", specifier = ">=2.0.4" },
     { name = "polars", specifier = ">=1.8.2" },
     { name = "pydash", specifier = ">=8.0.6" },
     { name = "pytest", marker = "extra == 'test'" },

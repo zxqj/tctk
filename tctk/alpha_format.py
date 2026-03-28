@@ -11,6 +11,8 @@ class FontVariant(StrEnum):
     DoubleStruck = auto()
     SansSerif = auto()
     Monospace = auto()
+    def formatter(self, **kwargs):
+        return AlphaFormatter(AlphaFormat(self, **kwargs))
 
 _VALID_ALPHA_FORMAT_COMBINATIONS = frozenset({
     (FontVariant.Script, False, False),
@@ -139,8 +141,9 @@ ALPHA_FORMAT_CODEPOINTS: AlphaCodePointMap = {
     for alpha_format in _ALPHA_FORMAT_NAME_PATTERNS
 }
 
-class AlphaFormatIO:
+class AlphaFormatter:
     def __init__(self, fmt: AlphaFormat):
         self.fmt = fmt
-
-
+        self.codepoint_map = _build_alpha_codepoint_map(self.fmt)
+    def __call__(self, msg):
+        return ''.join([chr(self.codepoint_map.get(c, ord(c))) for c in msg])

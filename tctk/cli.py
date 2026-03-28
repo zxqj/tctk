@@ -18,6 +18,8 @@ import dataclasses
 from .duel_bot import DuelBotFeature
 from .raffle.raffle_feature import RaffleFeature
 
+logger = Config.logger(__name__)
+
 feature_registry: dict[str, Type[BotFeature]] = {
     "activity_log": ActivityLogFeature,
     "bot_rinser": BotRinseFeature,
