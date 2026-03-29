@@ -32,6 +32,6 @@ loggers:
     handlers: [console_handler]
     propagate: no
   tctk:
-    level: DEBUG
+    level: WARNING
     handlers: [console_handler]
     propagate: no
