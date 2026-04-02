@@ -63,8 +63,7 @@ async def andy_done(msg: ChatMessage, sender: ChannelSender):
 decorators: list[Callable[[ChatMessage, ChannelSender], Awaitable[None]]] = [
     nut,
     are_mod,
-    bank,
-    kon
+    bank
 ]
 @dataclass
 class AutoRespFeature(MessageBotFeature):

@@ -28,6 +28,8 @@ class DuelBotFeature(MessageBotFeature):
         self._mrp = val
 
     async def on_message(self, msg: ChatMessage, sender: ChannelSender):
+        if await self._handle_set(msg, sender):
+            return
 
         if DuelOffer.from_proposal(msg).intoprop(self, DuelBotFeature.most_recent_proposal):
             if self._mrp.offeree.casefold() == msg.chat.username.casefold():
@@ -37,15 +39,17 @@ class DuelBotFeature(MessageBotFeature):
                 logger.variable(self._mrp.offerer)
                 await sender.send_result(lambda: no if self._mrp.amount > duel_max else yes)
 
-                el_former = """
-                if duel.amount > Config.get().max_duel_amt:
-                    await sender.send_guarded(
-                        f"!deny Fricc The maximum duel amount is {Config.get().max_duel_amt} coins.",
-                        guard=lambda: self.most_recent_proposal is duel
-                    )
-                else:
-                    await sender.send_guarded(
-                        f"!accept {rand_emoji()}",
-                        guard=lambda: self.most_recent_proposal is duel
-                    )
-                """
+    async def _handle_set(self, msg: ChatMessage, sender: ChannelSender) -> bool:
+        if msg.user.name.casefold() != Config.get().bot_config_user.casefold():
+            return False
+        parts = msg.text.strip().split()
+        if len(parts) != 3 or parts[0] != "!set" or parts[1] != "max_duel_amt":
+            return False
+        try:
+            new_max = int(parts[2])
+        except ValueError:
+            return False
+        Config.persist_with(lambda c: setattr(c, 'max_duel_amt', new_max))
+        logger.info(f"max_duel_amt set to {new_max} by {msg.user.name}")
+        await sender.send(f"Max duel amount set to {new_max} coins.")
+        return True

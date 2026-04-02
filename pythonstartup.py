@@ -8,6 +8,7 @@ Provides:
     sender  — ChannelSender connected to the configured channel
     V       — alpha_format.FontVariant
     bot     — the ChatBot instance
+    ds, f, ss — DoubleStruck, Fraktur, SansSerif senders
 """
 
 import asyncio
@@ -40,6 +41,26 @@ def send(msg: str, delay: float = None):
     """Synchronous wrapper: send('hello') or send(V.Script.formatter()('hello'))"""
     asyncio.run_coroutine_threadsafe(sender.send(msg, delay), _loop).result()
 
+make_sender = lambda v, **kwargs: lambda s: send(v.formatter(**kwargs)(s))
+
+ds = make_sender(V.DoubleStruck)
+f = make_sender(V.Fraktur)
+ss = make_sender(V.SansSerif)
+
+s = send
+ms = make_sender
 
 print(f"Connected to #{_channel}")
-print("Available: send(), sender, V (FontVariant), bot")
+import io
+buff = io.StringIO()
+
+print(
+    "Available:\n"
+    "  s(msg)              — send a message\n"
+    "  ms(variant, **kw)   — make a sender, e.g. ms(V.SansSerif, bold=True, italic=True)\n"
+    "  sender              — ChannelSender instance\n"
+    "  bot                 — ChatBot instance\n"
+    "  V                   — FontVariant enum\n"
+    "  ds, f, ss           — senders: DoubleStruck, Fraktur, SansSerif\n"
+    '                        e.g. ds("hey mods")'
+)

@@ -60,6 +60,7 @@ class Config:
     channel: str
     max_duel_amt: int
     bot_access_tokens_file: str
+    bot_config_user: str
     conf: ClassVar[Optional[Config]] = None
     log_conf_loaded: ClassVar[bool] = False
 
@@ -81,6 +82,7 @@ class Config:
     def backup():
         Config.conf = Config.get()
         d = dataclasses.asdict(Config.conf)
+        d['scopes'] = [s.value for s in Config.conf.scopes]
         with conf_path().with_suffix(".back").open('w') as f:
             yaml.dump(d, f)
 
@@ -89,6 +91,7 @@ class Config:
         Config.conf = Config.get()
         update(Config.conf)
         d = dataclasses.asdict(Config.conf)
+        d['scopes'] = [s.value for s in Config.conf.scopes]
         with conf_path().open('w') as f:
             yaml.dump(d, f)
 
@@ -107,6 +110,11 @@ class Config:
         def configure_logging():
             with logging_conf_path().open("r") as f:
                 config = yaml.safe_load(f.read())
+                log_dir = Config.data_dir()
+                log_dir.mkdir(parents=True, exist_ok=True)
+                file_cfg = config.get("handlers", {}).get("file_handler")
+                if file_cfg:
+                    file_cfg["filename"] = str(log_dir / file_cfg["filename"])
                 logging.config.dictConfig(config)
         if reload or not Config.log_conf_loaded:
             configure_logging()

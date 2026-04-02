@@ -75,7 +75,7 @@ duel_proposed = '@aallldeeeez, @dookiebetts800 wants to duel you for 348 eastcoi
 duel_denied = '@cenozoicmegafauna, are_mod denied your duel :('
 
 class Regex:
-    uname_re = "[\\w]{3,24}"
+    uname_re = "[\\w]{3,30}"
     duel_complete = '\\@?(?P<offeree>{uname_re}) won the Duel vs \\@?(?P<offeree>{uname_re}) PogChamp dookiebetts800 won 348 eastcoins FeelsGoodMan'
     duel_proposed = f'\\@?(?P<offeree>{uname_re}), \\@?(?P<offerer>{uname_re}) wants to duel you for (?P<amount>[0-9]+) eastcoins, you can !accept or !deny within 2 minutes'
     duel_denied = f"\\@?(?P<offerer>{uname_re}), \\@(?P<offeree>{uname_re}) denied your duel :("
