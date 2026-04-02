@@ -17,6 +17,7 @@ import dataclasses
 
 from .duel_bot import DuelBotFeature
 from .raffle.raffle_feature import RaffleFeature
+from .streamelements_tracker import StreamElementsTrackerFeature
 
 logger = Config.logger(__name__)
 
@@ -28,7 +29,10 @@ feature_registry: dict[str, Type[BotFeature]] = {
     "giveaway": GiveawayRaffleFeature,
     "raffle_report": RaffleReportFeature,
     "status_notification": StatusNotificationFeature,
+    "streamelements_tracker": StreamElementsTrackerFeature,
 }
+
+default_features = ["streamelements_tracker"]
 
 # Variant C: custom validation callback (useful for complex rules)
 def _validate_features(ctx, param, value):
@@ -53,6 +57,7 @@ def _validate_features(ctx, param, value):
 @click.option("--updates")
 @click.argument("features", nargs=-1, callback=_validate_features)
 async def cli(channel, updates, features):
+    features = list(dict.fromkeys(default_features + list(features)))
     feature_instances: list[BotFeature] = []
     feature_args: dict[str, dict[str, Any]] = {
         "raffle_tracker": {"raffle_bot_username": Config.get().raffle_authority_user}

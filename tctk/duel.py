@@ -69,6 +69,29 @@ class Duel(DuelOffer):
         loser = self.offeree if self.offerer_win else self.offerer
         return f"{winner} won the Duel vs {loser} PogChamp {winner} won {self.amount} eastcoins FeelsGoodMan"
 
+    @staticmethod
+    def from_result(msg: ChatMessage, pending: Optional[DuelOffer] = None) -> Maybe[Self]:
+        if msg.user.name.casefold() == Config.get().duel_authority_user.casefold():
+            m = re.match(Regex.duel_complete, msg.text)
+            if m is not None:
+                d = m.groupdict()
+                winner = d['winner']
+                loser = d['loser']
+                amount = int(d['amount'])
+                if pending is not None:
+                    offerer_win = winner.casefold() == pending.offerer.casefold()
+                    return Maybe(Duel(
+                        offerer=pending.offerer, offeree=pending.offeree,
+                        amount=amount, proposal_time=pending.proposal_time,
+                        offerer_win=offerer_win,
+                    ))
+                else:
+                    return Maybe(Duel(
+                        offerer=winner, offeree=loser,
+                        amount=amount, offerer_win=True,
+                    ))
+        return Maybe.empty()
+
 
 duel_complete = 'dookiebetts800 won the Duel vs aallldeeeez PogChamp dookiebetts800 won 348 eastcoins FeelsGoodMan'
 duel_proposed = '@aallldeeeez, @dookiebetts800 wants to duel you for 348 eastcoins, you can !accept or !deny within 2 minutes'
@@ -76,6 +99,6 @@ duel_denied = '@cenozoicmegafauna, are_mod denied your duel :('
 
 class Regex:
     uname_re = "[\\w]{3,30}"
-    duel_complete = '\\@?(?P<offeree>{uname_re}) won the Duel vs \\@?(?P<offeree>{uname_re}) PogChamp dookiebetts800 won 348 eastcoins FeelsGoodMan'
+    duel_complete = f'\\@?(?P<winner>{uname_re}) won the Duel vs \\@?(?P<loser>{uname_re}) PogChamp \\@?(?P=winner) won (?P<amount>[0-9]+) eastcoins FeelsGoodMan'
     duel_proposed = f'\\@?(?P<offeree>{uname_re}), \\@?(?P<offerer>{uname_re}) wants to duel you for (?P<amount>[0-9]+) eastcoins, you can !accept or !deny within 2 minutes'
     duel_denied = f"\\@?(?P<offerer>{uname_re}), \\@(?P<offeree>{uname_re}) denied your duel :("
