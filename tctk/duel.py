@@ -102,3 +102,4 @@ class Regex:
     duel_complete = f'\\@?(?P<winner>{uname_re}) won the Duel vs \\@?(?P<loser>{uname_re}) PogChamp \\@?(?P=winner) won (?P<amount>[0-9]+) eastcoins FeelsGoodMan'
     duel_proposed = f'\\@?(?P<offeree>{uname_re}), \\@?(?P<offerer>{uname_re}) wants to duel you for (?P<amount>[0-9]+) eastcoins, you can !accept or !deny within 2 minutes'
     duel_denied = f"\\@?(?P<offerer>{uname_re}), \\@(?P<offeree>{uname_re}) denied your duel :("
+    coins_response = f'\\@?(?P<username>{uname_re}) has (?P<coins>[0-9]+) eastcoins'

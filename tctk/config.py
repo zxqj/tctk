@@ -38,6 +38,7 @@ class Command(StrEnum):
     duel = auto()
     deny = auto()
     accept = auto()
+    coins = auto()
     #my commands
     rinse = auto()
     withdraw = auto()
@@ -58,7 +59,7 @@ class Config:
     raffle_authority_user: str
     duel_authority_user: str
     channel: str
-    max_duel_amt: int
+    max_duel_amt: int | str
     bot_access_tokens_file: str
     bot_config_user: str
     conf: ClassVar[Optional[Config]] = None
