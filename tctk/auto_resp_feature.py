@@ -46,12 +46,6 @@ async def batman(msg: ChatMessage, sender: ChannelSender):
     if "BatMan" in msg.text:
         await sender.send_unique("BatMan I'm the REAL BATMAN ReallyMad BatMan")
 
-async def bank(msg: ChatMessage, sender: ChannelSender):
-    if msg.user.name == WITHDRAW_USER:
-        m = WITHDRAW_PATTERN.search(msg.text)
-        if m:
-            await sender.send_unique(f"{Command.give} {int(m.group('amount'))}")
-
 async def andy_done(msg: ChatMessage, sender: ChannelSender):
     conditions = []
     conditions.append(lambda msg: "done".casefold() in msg.text)
@@ -62,8 +56,7 @@ async def andy_done(msg: ChatMessage, sender: ChannelSender):
 
 decorators: list[Callable[[ChatMessage, ChannelSender], Awaitable[None]]] = [
     nut,
-    are_mod,
-    bank
+    are_mod
 ]
 @dataclass
 class AutoRespFeature(MessageBotFeature):

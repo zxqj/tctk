@@ -19,17 +19,22 @@ def rand_emoji():
     return choice([*emoji.EMOJI_DATA.keys()])
 
 async def show_user_auth_url(url: str):
-    print(f"navigate to {url} to authorize twitch")
+    print(f"\n>>> Navigate to {url} to authorize twitch <<<\n", flush=True)
 
 # Define the required scopes
 async def get_chat(access_tokens_file: str = Config.get().bot_access_tokens_file, app: App = Config.get().app, scopes: list[AuthScope] = Config.get().scopes) -> tuple[Twitch, Chat]:
     # Set up twitch API instance and add user authentication
     twitch = await Twitch(app.id, app.secret)
 
+    authenticator = UserAuthenticator(twitch, scopes)
+    auth_url = authenticator.return_auth_url()
+
     async def get_tokens(t: Twitch, scopes: list[AuthScope]):
-        auth = UserAuthenticator(twitch, scopes)
-        token, refresh_token = await auth.authenticate(use_browser=False, auth_url_callback=show_user_auth_url)
+        await show_user_auth_url(auth_url)
+        token, refresh_token = await authenticator.authenticate(use_browser=False, auth_url_callback=show_user_auth_url)
         return (token, refresh_token)
+
+    print(f"If prompted to authorize, visit:\n  {auth_url}", flush=True)
 
     storage_helper = UserAuthenticationStorageHelper(
         twitch,

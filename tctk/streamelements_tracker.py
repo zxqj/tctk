@@ -82,9 +82,15 @@ class StreamElementsTrackerFeature(BotFeature):
         self.raffle_tracker = RaffleTrackerFeature(self.conn, raffle_bot_username=raffle_bot_username)
 
     def on_start(self):
-        logger.info("Initializing StreamElements tracker database schema")
-        self.conn.execute(SCHEMA_SQL)
-        self.conn.commit()
+        existing = {row[0] for row in self.conn.execute(
+            "SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename IN ('duel', 'raffle', 'user_raffle')"
+        ).fetchall()}
+        needed = {'duel', 'raffle', 'user_raffle'}
+        missing = needed - existing
+        if missing:
+            logger.info(f"Creating tracker tables: {', '.join(sorted(missing))}")
+            self.conn.execute(SCHEMA_SQL)
+            self.conn.commit()
 
     def get_subscriptions(self) -> list[Subscription]:
         return self.duel_tracker.get_subscriptions() + self.raffle_tracker.get_subscriptions()
