@@ -4,12 +4,12 @@ import time
 from typing import Callable, Self
 from tctk import ChannelSender, Subscription
 from tctk.bot import rand_emoji
-from tctk.duel import Duel, DuelOffer, Regex
-from tctk.duel_feature import DuelFeature
-from tctk.message_bot import MessageBotFeature
+from tctk.features.se.duel.duel import Duel, DuelOffer, Regex
+from tctk.features.se.duel.duel_feature import DuelFeature
+from tctk.features.message_bot import MessageBotFeature
 from twitchAPI.chat import ChatMessage, EventData
 from twitchAPI.type import ChatEvent
-from .config import Command, Config
+from tctk.config import Command, Config
 
 history = dict()
 logger = logging.getLogger(__name__)

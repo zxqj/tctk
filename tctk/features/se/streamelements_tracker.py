@@ -5,9 +5,9 @@ import psycopg
 from tctk import BotFeature, Subscription
 from tctk.bot import ChatBot, ChannelSender
 from tctk.config import Config
-from tctk.duel import DuelOffer, Duel
-from tctk.duel_feature import DuelFeature
-from tctk.raffle.raffle_feature import RaffleFeature, RaffleEventData
+from tctk.features.se.duel.duel import DuelOffer, Duel
+from tctk.features.se.duel.duel_feature import DuelFeature
+from tctk.features.se.raffle.raffle_feature import RaffleFeature, RaffleEventData
 
 logger = logging.getLogger(__name__)
 

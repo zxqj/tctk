@@ -3,28 +3,24 @@ from typing import Type, Any
 
 import asyncclick as click
 
-from tctk.auto_resp_feature import AutoRespFeature
+from tctk.features.auto_resp_feature import AutoRespFeature
 from tctk.config import Config
-from tctk.raffle.raffle_features import GiveawayRaffleFeature, RaffleReportFeature
-from tctk.status_notification import StatusNotificationFeature
+from tctk.features.se.raffle.raffle_features import GiveawayRaffleFeature, RaffleReportFeature
+from tctk.features.status_notification import StatusNotificationFeature
 
 from . import BotFeature, Subscription
-from .bot_rinser import BotRinseFeature
-from .activity_log import ActivityLogFeature
 from .bot import ChatBot
 from sys import modules
 import dataclasses
 
-from .duel_bot import DuelBotFeature
-from .feature_manager import FeatureManagerFeature
-from .raffle.raffle_feature import RaffleFeature
-from .streamelements_tracker import StreamElementsTrackerFeature
+from .features.se.duel.duel_bot import DuelBotFeature
+from .features.feature_manager import FeatureManagerFeature
+from .features.se.raffle.raffle_feature import RaffleFeature
+from .features.se.streamelements_tracker import StreamElementsTrackerFeature
 
 logger = Config.logger(__name__)
 
 feature_registry: dict[str, Type[BotFeature]] = {
-    "activity_log": ActivityLogFeature,
-    "bot_rinser": BotRinseFeature,
     "duel_bot": DuelBotFeature,
     "auto_resp": AutoRespFeature,
     "giveaway": GiveawayRaffleFeature,

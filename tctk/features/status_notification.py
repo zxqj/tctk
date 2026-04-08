@@ -7,7 +7,7 @@ from twitchAPI.type import ChatEvent
 
 from tctk import BotFeature, Subscription
 from tctk.bot import ChannelSender, ChatBot
-from tctk.message_bot import MessageBotFeature
+from tctk.features.message_bot import MessageBotFeature
 import json
 from tctk.alpha_format import AlphaFormatter as Fmtr, AlphaFormat as Fmt, FontVariant as Vrnt
 

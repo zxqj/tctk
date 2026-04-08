@@ -6,7 +6,7 @@ from twitchAPI.chat import ChatMessage
 
 from tctk import BotFeature, ChannelSender, Subscription
 from tctk.config import Config
-from tctk.message_bot import MessageBotFeature
+from tctk.features.message_bot import MessageBotFeature
 
 logger = logging.getLogger(__name__)
 

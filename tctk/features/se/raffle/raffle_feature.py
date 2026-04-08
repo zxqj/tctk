@@ -10,9 +10,9 @@ from random import randint
 from datetime import datetime
 import re
 from tctk.config import Command, Config
-from tctk.message_bot import MessageBotFeature
-from tctk.store import Raffle as RaffleStore
-from tctk.store import UserRaffle
+from tctk.features.message_bot import MessageBotFeature
+from tctk.features.se.store import Raffle as RaffleStore
+from tctk.features.se.store import UserRaffle
 import pydash as py
 
 def clone_without(obj, *paths):

@@ -2,7 +2,7 @@ from twitchAPI.chat import ChatMessage
 
 from tctk.bot import ChannelSender
 from tctk.config import Command, Config
-from tctk.raffle.raffle_feature import RaffleEventData, RaffleFeature
+from tctk.features.se.raffle.raffle_feature import RaffleEventData, RaffleFeature
 
 logger = Config.logger(__name__)
 class GiveawayRaffleFeature(RaffleFeature):

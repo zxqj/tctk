@@ -1,7 +1,7 @@
 from tctk.bot import ChannelSender
 from tctk.config import Config
-from tctk.duel import DuelOffer, Duel
-from tctk.message_bot import MessageBotFeature
+from tctk.features.se.duel.duel import DuelOffer, Duel
+from tctk.features.message_bot import MessageBotFeature
 from twitchAPI.chat import ChatMessage
 
 

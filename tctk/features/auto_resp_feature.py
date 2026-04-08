@@ -6,7 +6,7 @@ from twitchAPI.chat import ChatMessage
 from functools import reduce
 from tctk.bot import ChannelSender
 from tctk.config import Command, Config
-from tctk.message_bot import MessageBotFeature
+from tctk.features.message_bot import MessageBotFeature
 from functools import reduce
 
 WITHDRAW_PATTERN = re.compile(f"\b{Command.withdraw}\b(?P<amount>[0-9]+)")
@@ -45,14 +45,6 @@ async def are_mod(msg: ChatMessage, sender: ChannelSender):
 async def batman(msg: ChatMessage, sender: ChannelSender):
     if "BatMan" in msg.text:
         await sender.send_unique("BatMan I'm the REAL BATMAN ReallyMad BatMan")
-
-async def andy_done(msg: ChatMessage, sender: ChannelSender):
-    conditions = []
-    conditions.append(lambda msg: "done".casefold() in msg.text)
-    conditions.append(msg.user.name.casefold() == "andyreidisapawg".casefold())
-
-    if reduce(lambda x,y: x(msg) and y(msg), conditions):
-        await sender.send_unique("Sure , Andy")
 
 decorators: list[Callable[[ChatMessage, ChannelSender], Awaitable[None]]] = [
     nut,
