@@ -60,6 +60,7 @@ class Config:
     duel_authority_user: str
     channel: str
     max_duel_amt: int | str
+    min_max_duel_amt_if_percent: int
     bot_access_tokens_file: str
     bot_config_user: str
     conf: ClassVar[Optional[Config]] = None

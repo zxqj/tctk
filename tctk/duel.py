@@ -103,3 +103,4 @@ class Regex:
     duel_proposed = f'\\@?(?P<offeree>{uname_re}), \\@?(?P<offerer>{uname_re}) wants to duel you for (?P<amount>[0-9]+) eastcoins, you can !accept or !deny within 2 minutes'
     duel_denied = f"\\@?(?P<offerer>{uname_re}), \\@(?P<offeree>{uname_re}) denied your duel :("
     coins_response = f'\\@?(?P<username>{uname_re}) has (?P<coins>[0-9]+) eastcoins'
+    coins_given = f'\\@?(?P<giver>{uname_re}) gave (?P<amount>[0-9]+) eastcoins to \\@?(?P<receiver>{uname_re})'

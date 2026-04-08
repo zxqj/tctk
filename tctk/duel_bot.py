@@ -15,12 +15,12 @@ history = dict()
 logger = logging.getLogger(__name__)
 
 
-def resolve_max_duel_amt(max_duel_amt: int | str, current_coins: int | None) -> int | None:
+def resolve_max_duel_amt(max_duel_amt: int | str, current_coins: int | None, floor: int = 0) -> int | None:
     if isinstance(max_duel_amt, str) and max_duel_amt.endswith('%'):
         pct = float(max_duel_amt[:-1]) / 100
         if current_coins is None:
             return None
-        return int(current_coins * pct)
+        return max(int(current_coins * pct), floor)
     return int(max_duel_amt)
 
 
@@ -34,7 +34,7 @@ class DuelBotFeature(DuelFeature):
         if not self._coins_queried:
             self._coins_queried = True
             logger.info("Querying coin balance")
-            await sender.send(str(Command.coins))
+            await sender.send_message(str(Command.coins))
 
     def get_subscriptions(self) -> list[Subscription]:
         subs = super().get_subscriptions()
@@ -45,7 +45,8 @@ class DuelBotFeature(DuelFeature):
         if proposal.offeree.casefold() != sender.chat.username.casefold():
             return
 
-        duel_max = resolve_max_duel_amt(Config.get().max_duel_amt, self.current_coins)
+        cfg = Config.get()
+        duel_max = resolve_max_duel_amt(cfg.max_duel_amt, self.current_coins, cfg.min_max_duel_amt_if_percent)
         if duel_max is None:
             logger.warning("Cannot determine max duel amount (coins unknown), denying")
             await sender.send_unique(Command.deny("Fricc I don't know how many coins I have yet."))
@@ -78,6 +79,12 @@ class DuelBotFeature(DuelFeature):
         if self._handle_coins_response(msg, sender):
             return
 
+        if self._handle_give(msg, sender):
+            return
+
+        if self._handle_raffle_win(msg, sender):
+            return
+
         await super().on_message(msg, sender)
 
     def _handle_coins_response(self, msg: ChatMessage, sender: ChannelSender) -> bool:
@@ -92,6 +99,47 @@ class DuelBotFeature(DuelFeature):
         self.current_coins = int(m.group('coins'))
         logger.info(f"Coin balance: {self.current_coins}")
         return True
+
+    _raffle_close_re = re.compile(
+        r'The Multi-Raffle has ended and (.+) won (\d+) EastCoin each'
+    )
+
+    def _handle_raffle_win(self, msg: ChatMessage, sender: ChannelSender) -> bool:
+        if msg.user.name.casefold() != Config.get().raffle_authority_user.casefold():
+            return False
+        m = self._raffle_close_re.search(msg.text)
+        if m is None:
+            return False
+        winners_str = m.group(1)
+        amount_each = int(m.group(2))
+        winners = [w.strip().casefold() for w in re.split(r',\s*|\s+and\s+', winners_str) if w.strip()]
+        bot_name = sender.chat.username.casefold()
+        if bot_name in winners and self.current_coins is not None:
+            self.current_coins += amount_each
+            logger.info(f"Won raffle for {amount_each}, balance={self.current_coins}")
+        return False
+
+    def _handle_give(self, msg: ChatMessage, sender: ChannelSender) -> bool:
+        if msg.user.name.casefold() != Config.get().duel_authority_user.casefold():
+            return False
+        m = re.search(Regex.coins_given, msg.text)
+        if m is None:
+            return False
+        bot_name = sender.chat.username.casefold()
+        giver = m.group('giver')
+        receiver = m.group('receiver')
+        amount = int(m.group('amount'))
+        if giver.casefold() == bot_name:
+            if self.current_coins is not None:
+                self.current_coins -= amount
+                logger.info(f"Gave {amount} to {receiver}, balance={self.current_coins}")
+            return True
+        if receiver.casefold() == bot_name:
+            if self.current_coins is not None:
+                self.current_coins += amount
+                logger.info(f"Received {amount} from {giver}, balance={self.current_coins}")
+            return True
+        return False
 
     async def _handle_set(self, msg: ChatMessage, sender: ChannelSender) -> bool:
         if msg.user.name.casefold() != Config.get().bot_config_user.casefold():
