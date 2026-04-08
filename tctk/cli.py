@@ -16,6 +16,7 @@ from sys import modules
 import dataclasses
 
 from .duel_bot import DuelBotFeature
+from .feature_manager import FeatureManagerFeature
 from .raffle.raffle_feature import RaffleFeature
 from .streamelements_tracker import StreamElementsTrackerFeature
 
@@ -58,33 +59,49 @@ def _validate_features(ctx, param, value):
 @click.argument("features", nargs=-1, callback=_validate_features)
 async def cli(channel, updates, features):
     features = list(dict.fromkeys(default_features + list(features)))
-    feature_instances: list[BotFeature] = []
     feature_args: dict[str, dict[str, Any]] = {
         "raffle_tracker": {"raffle_bot_username": Config.get().raffle_authority_user}
     }
     if updates is not None:
         feature_args['status_notification'] = { "updates_message": updates }
 
+    active: dict[str, BotFeature] = {}
     for feature in features:
         if feature in feature_args:
-            feature_instances.append(feature_registry[feature](*feature_args[feature]))
+            active[feature] = feature_registry[feature](**feature_args[feature])
         else:
-            feature_instances.append(feature_registry[feature]())
+            active[feature] = feature_registry[feature]()
 
-    for feature in feature_instances:
+    manager = FeatureManagerFeature(
+        feature_registry=feature_registry,
+        active=active,
+        feature_args=feature_args,
+    )
+    active["feature_manager"] = manager
+
+    for feature in active.values():
         if iscoroutinefunction(feature.on_start):
             await feature.on_start()
         else:
             feature.on_start()
 
-    subscriptions: list[Subscription] = []
-    for feature in feature_instances:
-        subscriptions.extend(feature.get_subscriptions())
+    async def register_initial_features(b):
+        for name, feature in active.items():
+            handlers: list[tuple[Any, Any]] = []
+            for event_type, cb in feature.get_subscriptions():
+                wrapper = manager._wrap_subscription(cb, b.sender)
+                b.chat.register_event(event_type, wrapper)
+                handlers.append((event_type, wrapper))
+            manager.record_initial_handlers(name, handlers)
 
-    bot = await ChatBot.create(channel=channel, subscriptions=subscriptions)
+    bot = await ChatBot.create(
+        channel=channel,
+        subscriptions=[],
+        post_subscribe=register_initial_features,
+    )
 
     async def stop_features():
-        for feature in feature_instances:
+        for feature in active.values():
             if iscoroutinefunction(feature.on_exit):
                 await feature.on_exit(bot.sender)
             else:

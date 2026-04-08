@@ -30,9 +30,9 @@ async def kon(msg: ChatMessage, sender: ChannelSender):
         if reduce(lambda a, b: a or b, [bw in msg.text.lower() for bw in Config.get().auto_timeout_words]):
             await sender.send_unique("Fricc")
         else:
-            response = ""
             text = msg.text.replace("Concern", "")
-            for match in CON_WORD_PATTERN.finditer(text):
+            match = CON_WORD_PATTERN.search(text)
+            if match is not None:
                 response = replace_con_words(match.group())
                 response = f"bUrself {response} ? bUrself LETSGOOO"
                 await sender.send_unique(response)

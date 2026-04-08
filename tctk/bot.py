@@ -130,9 +130,9 @@ class ChatBot(EventEmitter[ChatEvent, EventData]):
         self.sender = None
 
     @classmethod
-    async def create(cls, channel, access_tokens_file: str = Config.get().bot_access_tokens_file, subscriptions: list[tuple] = None):
+    async def create(cls, channel, access_tokens_file: str = Config.get().bot_access_tokens_file, subscriptions: list[tuple] = None, post_subscribe: Callable[['ChatBot'], Awaitable[Any]] | None = None):
         self = cls(channel, access_tokens_file)
-        await self.init(subscriptions or [])
+        await self.init(subscriptions or [], post_subscribe=post_subscribe)
         return self
 
     def subscribe(self, t: ChatEvent, cb: Callable[[EventData, ChannelSender], Awaitable[Any]]) -> None:
@@ -145,7 +145,7 @@ class ChatBot(EventEmitter[ChatEvent, EventData]):
         self.chat.register_event(t, handler)
 
     # Main function to run the bot
-    async def init(self, subscriptions: list[tuple] = None):
+    async def init(self, subscriptions: list[tuple] = None, post_subscribe: Callable[['ChatBot'], Awaitable[Any]] | None = None):
         twitch, chat = await get_chat()
         self.chat = chat
         self.twitch = twitch
@@ -153,10 +153,14 @@ class ChatBot(EventEmitter[ChatEvent, EventData]):
         for event_type, handler in (subscriptions or []):
             self.subscribe(event_type, handler)
 
+        self.sender = ChannelSender(self.chat, self.channel)
+
+        if post_subscribe is not None:
+            await post_subscribe(self)
+
         # Connect and join the channel
         chat.start()
 
-        self.sender = ChannelSender(self.chat, self.channel)
         await chat.join_room(self.channel)
 
     async def run(self, before_stop: list[Callable[[], Awaitable[Any]]] | None = None):
