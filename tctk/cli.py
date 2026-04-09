@@ -5,7 +5,7 @@ import asyncclick as click
 
 from tctk.features.auto_resp_feature import AutoRespFeature
 from tctk.config import Config
-from tctk.features.se.raffle.raffle_features import GiveawayRaffleFeature, RaffleReportFeature
+from tctk.features.se.raffle.raffle_features import RaffleGiveawayFeature, RaffleJoinFeature, RaffleReportFeature
 from tctk.features.status_notification import StatusNotificationFeature
 
 from . import BotFeature, Subscription
@@ -21,9 +21,10 @@ from .features.se.streamelements_tracker import StreamElementsTrackerFeature
 logger = Config.logger(__name__)
 
 feature_registry: dict[str, Type[BotFeature]] = {
-    "duel_bot": DuelBotFeature,
-    "auto_resp": AutoRespFeature,
-    "giveaway": GiveawayRaffleFeature,
+    "dueler": DuelBotFeature,
+    "auto_responder": AutoRespFeature,
+    "raffle_join": RaffleJoinFeature,
+    "raffle_giveaway": RaffleGiveawayFeature,
     "raffle_report": RaffleReportFeature,
     "status_notification": StatusNotificationFeature,
     "streamelements_tracker": StreamElementsTrackerFeature,
@@ -54,7 +55,19 @@ def _validate_features(ctx, param, value):
 @click.option("--updates")
 @click.argument("features", nargs=-1, callback=_validate_features)
 async def cli(channel, updates, features):
-    features = list(dict.fromkeys(default_features + list(features)))
+    def expand_deps(names):
+        seen: dict[str, None] = {}
+        def visit(n):
+            if n in seen:
+                return
+            for dep in getattr(feature_registry[n], "requires", []) or []:
+                visit(dep)
+            seen[n] = None
+        for n in names:
+            visit(n)
+        return list(seen.keys())
+
+    features = expand_deps(dict.fromkeys(default_features + list(features)))
     feature_args: dict[str, dict[str, Any]] = {
         "raffle_tracker": {"raffle_bot_username": Config.get().raffle_authority_user}
     }

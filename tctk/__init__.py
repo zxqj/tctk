@@ -8,6 +8,9 @@ type Subscription = tuple[ChatEvent, Callable[[EventData, ChannelSender], Awaita
 
 
 class BotFeature:
+    # Names (as registered in feature_registry) of features this one depends on.
+    requires: list[str] = []
+
     def on_start(self):
         pass
 

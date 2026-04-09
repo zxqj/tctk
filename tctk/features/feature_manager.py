@@ -54,12 +54,19 @@ class FeatureManagerFeature(MessageBotFeature):
             await cb(*args, sender)
         return handler
 
-    async def _add(self, name: str, sender: ChannelSender) -> str:
-        if name not in self.feature_registry:
-            return f"unknown feature: {name}"
-        if name in self.active:
-            return f"{name} already active"
+    def _deps_of(self, name: str) -> list[str]:
+        return list(getattr(self.feature_registry[name], "requires", []) or [])
 
+    def _dependents_of(self, name: str) -> list[str]:
+        result = []
+        for other in self.active.keys():
+            if other == name:
+                continue
+            if name in self._deps_of(other):
+                result.append(other)
+        return result
+
+    async def _add_one(self, name: str, sender: ChannelSender) -> str:
         feature = self._instantiate(name)
         if iscoroutinefunction(feature.on_start):
             await feature.on_start()
@@ -76,12 +83,33 @@ class FeatureManagerFeature(MessageBotFeature):
         self.active[name] = (feature, handlers)
         return f"added {name}"
 
-    async def _remove(self, name: str, sender: ChannelSender) -> str:
-        if name in PROTECTED_FEATURES:
-            return f"{name} is protected and cannot be removed"
-        if name not in self.active:
-            return f"{name} not active"
+    async def _add(self, name: str, sender: ChannelSender) -> str:
+        if name not in self.feature_registry:
+            return f"unknown feature: {name}"
+        if name in self.active:
+            return f"{name} already active"
 
+        # Resolve dependency order (depth-first, dedup).
+        order: dict[str, None] = {}
+        def visit(n: str):
+            if n in order or n in self.active:
+                return
+            if n not in self.feature_registry:
+                raise KeyError(n)
+            for dep in self._deps_of(n):
+                visit(dep)
+            order[n] = None
+        try:
+            visit(name)
+        except KeyError as e:
+            return f"unknown dependency: {e.args[0]}"
+
+        results = []
+        for n in order.keys():
+            results.append(await self._add_one(n, sender))
+        return "; ".join(results)
+
+    async def _remove_one(self, name: str, sender: ChannelSender) -> str:
         feature, handlers = self.active.pop(name)
         chat = sender.chat
         for event_type, wrapper in handlers:
@@ -99,6 +127,29 @@ class FeatureManagerFeature(MessageBotFeature):
             logger.warning(f"on_exit for {name} failed: {e}")
 
         return f"removed {name}"
+
+    async def _remove(self, name: str, sender: ChannelSender) -> str:
+        if name not in self.active:
+            return f"{name} not active"
+
+        # Compute removal set: name plus everything that (transitively) depends on it.
+        to_remove: dict[str, None] = {}
+        def visit(n: str):
+            if n in to_remove:
+                return
+            for dep in self._dependents_of(n):
+                visit(dep)
+            to_remove[n] = None
+        visit(name)
+
+        protected = [n for n in to_remove if n in PROTECTED_FEATURES]
+        if protected:
+            return f"cannot remove {name}: would also remove protected feature(s) {', '.join(protected)}"
+
+        results = []
+        for n in to_remove.keys():
+            results.append(await self._remove_one(n, sender))
+        return "; ".join(results)
 
     def _list(self) -> str:
         if not self.active:

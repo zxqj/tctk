@@ -5,23 +5,18 @@ from tctk.config import Command, Config
 from tctk.features.se.raffle.raffle_feature import RaffleEventData, RaffleFeature
 
 logger = Config.logger(__name__)
-class GiveawayRaffleFeature(RaffleFeature):
+
+class RaffleJoinFeature(RaffleFeature):
     def __init__(self, *args):
         super().__init__(*args)
-
     async def on_open(self, event_data, sender):
-        logger.debug("on open event")
-        logger.debug(event_data.raffle.amount)
-        logger.debug(event_data.raffle.duration)
-        logger.debug(event_data.raffle.start_time)
-        logger.debug("------------")
         return await sender.send_unique(Command.raffle_join())
 
-    async def on_join(self, event_data, sender):
-        logger.debug(" ")
-        logger.debug("on join event")
-        logger.debug("     ")
-        pass
+class RaffleGiveawayFeature(RaffleFeature):
+    requires = ["raffle_join"]
+
+    def __init__(self, *args):
+        super().__init__(*args)
 
     async def on_close(self, event_data: RaffleEventData, sender: ChannelSender):
         logger.debug("close")
